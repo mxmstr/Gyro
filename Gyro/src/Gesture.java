@@ -48,6 +48,27 @@ public class Gesture {
 		
 	}
 	
+	public static boolean checkValuesMeetCriteria(
+			Object[] values, Double thresholdLo, Double thresholdHi, int winLength) {
+	
+		int count = 0;
+		
+		for (int j = 1; j < values.length; j++) {
+			
+			Double value = (Double)values[j];
+			
+			if (value > thresholdLo && value < thresholdHi)
+				count++;
+			
+			if (count == winLength)
+				return true;
+				
+		}
+		
+		return false;
+		
+	}
+	
 	/*
 	from indexBegin to indexEnd, search data for values that are higher than threshold. 
 	Return the first index where data has values that meet this criteria for at least winLength samples
@@ -56,24 +77,9 @@ public class Gesture {
 			ArrayList<Object[]> data, int indexBegin, int indexEnd, 
 			Double threshold, int winLength) {
 		
-		for (int i = indexBegin; i <= indexEnd; i++) {
-			
-			int count = 0;
-			Object[] values = data.get(i);
-			
-			for (int j = 1; j < values.length; j++) {
-				
-				Double value = (Double)values[j];
-				
-				if (value > threshold)
-					count++;
-				
-				if (count == winLength)
-					return i;
-					
-			}
-			
-		}
+		for (int i = indexBegin; i <= indexEnd; i++)
+			if (checkValuesMeetCriteria(data.get(i), threshold, Double.MAX_VALUE, winLength))
+				return i;
 		
 		return -1;
 		
@@ -88,24 +94,22 @@ public class Gesture {
 			ArrayList<Object[]> data, int indexBegin, int indexEnd, 
 			double thresholdLo, double thresholdHi, int winLength) {
 		
-		for (int i = indexBegin; i >= indexEnd; i--) {
+		for (int i = indexBegin; i >= indexEnd; i--) 
+			if (checkValuesMeetCriteria(data.get(i), thresholdLo, thresholdHi, winLength))
+				return i;
 			
-			int count = 0;
-			Object[] values = data.get(i);
-			
-			for (int j = 1; j < values.length; j++) {
-				
-				Double value = (Double)values[j];
-				
-				if (value > thresholdLo && value < thresholdHi)
-					count++;
-				
-				if (count == winLength)
-					return i;
-					
-			}
-			
-		}
+		
+		return -1;
+		
+	}
+	
+	public static int frontSearchContinuityWithinRange(
+			ArrayList<Object[]> data, int indexBegin, int indexEnd, 
+			double thresholdLo, double thresholdHi, int winLength) {
+		
+		for (int i = indexBegin; i <= indexEnd; i++) 
+			if (checkValuesMeetCriteria(data.get(i), thresholdLo, thresholdHi, winLength))
+				return i;
 		
 		return -1;
 		
@@ -189,7 +193,7 @@ public class Gesture {
 		
 		Gesture g1 = new Gesture("src//latestSwing.csv");
 		
-		System.out.println(searchContinuityAboveValue(g1.data, 0, 1275, 20.0, 3));
+		System.out.println(searchContinuityAboveValue(g1.data, 1275, 1276, 20.0, 3));
 		System.out.println(backSearchContinuityWithinRange(g1.data, 1275, 0, 5.0, 20.0, 3));
 		System.out.println(searchContinuityAboveValueTwoSignals(g1.data, g1.data, 0, 1275, 5.0, 10.0, 1));
 		
