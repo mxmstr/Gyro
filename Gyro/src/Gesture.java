@@ -48,12 +48,37 @@ public class Gesture {
 		
 	}
 	
+	private ArrayList<Object[]> splitDataByColumn(int start, int end) {
+		
+		ArrayList<Object[]> splitData = new ArrayList<Object[]>();
+		
+		for (int i = 0; i < data.size(); i++) {
+			
+			Object[] values = new Object[end - start + 1];
+			
+			for (int j = start; j <= end; j++)
+				values[j - start] = data.get(i)[j];
+			
+			splitData.add(values);
+			
+		}
+		
+		return splitData;
+		
+	}
+	
+	public ArrayList<Object[]> getData() {
+		
+		return data;
+		
+	}
+	
 	public static boolean checkValuesMeetCriteria(
 			Object[] values, Double thresholdLo, Double thresholdHi, int winLength) {
 	
 		int count = 0;
 		
-		for (int j = 1; j < values.length; j++) {
+		for (int j = 0; j < values.length; j++) {
 			
 			Double value = (Double)values[j];
 			
@@ -77,7 +102,7 @@ public class Gesture {
 			ArrayList<Object[]> data, int indexBegin, int indexEnd, 
 			Double threshold, int winLength) {
 		
-		for (int i = indexBegin; i <= indexEnd; i++)
+		for (int i = indexBegin; i < indexEnd; i++)
 			if (checkValuesMeetCriteria(data.get(i), threshold, Double.MAX_VALUE, winLength))
 				return i;
 		
@@ -94,7 +119,7 @@ public class Gesture {
 			ArrayList<Object[]> data, int indexBegin, int indexEnd, 
 			double thresholdLo, double thresholdHi, int winLength) {
 		
-		for (int i = indexBegin; i >= indexEnd; i--) 
+		for (int i = indexBegin; i > indexEnd; i--) 
 			if (checkValuesMeetCriteria(data.get(i), thresholdLo, thresholdHi, winLength))
 				return i;
 			
@@ -107,7 +132,7 @@ public class Gesture {
 			ArrayList<Object[]> data, int indexBegin, int indexEnd, 
 			double thresholdLo, double thresholdHi, int winLength) {
 		
-		for (int i = indexBegin; i <= indexEnd; i++) 
+		for (int i = indexBegin; i < indexEnd; i++) 
 			if (checkValuesMeetCriteria(data.get(i), thresholdLo, thresholdHi, winLength))
 				return i;
 		
@@ -157,6 +182,18 @@ public class Gesture {
 		int[] indicies = new int[2];
 		
 		/*
+		Find start index
+		*/
+		indexBegin = frontSearchContinuityWithinRange(
+				data, indexBegin, indexEnd, 
+				thresholdLo, thresholdHi, winLength);
+		
+		if (indexBegin == -1)
+			return null;
+		
+		indicies[0] = indexBegin;
+		
+		/*
 		Find end index
 		*/
 		indexEnd = backSearchContinuityWithinRange(
@@ -168,23 +205,6 @@ public class Gesture {
 		
 		indicies[1] = indexEnd;
 		
-		/*
-		Find start index
-		*/
-		int newIndex = indexEnd;
-		while (newIndex != -1) {
-			
-			indexEnd = newIndex;
-			newIndex--;
-			
-			newIndex = backSearchContinuityWithinRange(
-					data, newIndex, indexBegin, 
-					thresholdLo, thresholdHi, winLength);
-			
-		}
-		
-		indicies[0] = indexEnd;
-		
 		return indicies;
 		
 	}
@@ -193,11 +213,16 @@ public class Gesture {
 		
 		Gesture g1 = new Gesture("src//latestSwing.csv");
 		
-		System.out.println(searchContinuityAboveValue(g1.data, 1275, 1276, 20.0, 3));
-		System.out.println(backSearchContinuityWithinRange(g1.data, 1275, 0, 5.0, 20.0, 3));
-		System.out.println(searchContinuityAboveValueTwoSignals(g1.data, g1.data, 0, 1275, 5.0, 10.0, 1));
+		ArrayList<Object[]> data = g1.getData();
+		ArrayList<Object[]> timestamps = g1.splitDataByColumn(0, 0);
+		ArrayList<Object[]> accels = g1.splitDataByColumn(1, 3);
+		ArrayList<Object[]> gyros = g1.splitDataByColumn(4, 6);
 		
-		int[] indicies = searchMultiContinuityWithinRange(g1.data, 0, 1275, 5.0, 20.0, 3);
+		System.out.println(searchContinuityAboveValue(gyros, 0, 1275, 20.0, 2));
+		System.out.println(backSearchContinuityWithinRange(gyros, 1275, 0, 5.0, 20.0, 2));
+		System.out.println(searchContinuityAboveValueTwoSignals(gyros, accels, 0, 1275, 5.0, 10.0, 1));
+		
+		int[] indicies = searchMultiContinuityWithinRange(gyros, 0, 1275, 5.0, 20.0, 2);
 		if (indicies != null)
 			System.out.println(indicies[0] + " " + indicies[1]);
 		
